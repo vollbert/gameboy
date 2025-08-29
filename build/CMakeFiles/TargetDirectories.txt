@@ -1,0 +1,3 @@
+/home/fabianolbert/Documents/Projects/gameboy/build/CMakeFiles/gameboyEmulator.dir
+/home/fabianolbert/Documents/Projects/gameboy/build/CMakeFiles/edit_cache.dir
+/home/fabianolbert/Documents/Projects/gameboy/build/CMakeFiles/rebuild_cache.dir
