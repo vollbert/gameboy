@@ -12,12 +12,20 @@ find_package(OpenGL REQUIRED)
 
 add_library(glad STATIC ${PROJECT_SOURCE_DIR}/src/glad/src/glad.c)
 
+add_library(font STATIC 
+  ${PROJECT_SOURCE_DIR}/src/font/reader.cpp
+  ${PROJECT_SOURCE_DIR}/src/font/TTFReader.cpp
+)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw OpenGL glad)
+add_executable(${PROJECT_NAME} 
+                src/main.cpp
+              )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE glfw OpenGL glad font)
 
 target_include_directories(glad PUBLIC
     ${PROJECT_SOURCE_DIR}/src/glad/include # This makes 'include/' discoverable for glad/glad.h
 )
+
 
