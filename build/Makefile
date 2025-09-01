@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named glad
+
+# Build rule for target.
+glad: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 glad
+.PHONY : glad
+
+# fast build rule for target.
+glad/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/build
+.PHONY : glad/fast
+
+#=============================================================================
 # Target rules for targets named gameboyEmulator
 
 # Build rule for target.
@@ -128,6 +141,30 @@ gameboyEmulator: cmake_check_build_system
 gameboyEmulator/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboyEmulator.dir/build.make CMakeFiles/gameboyEmulator.dir/build
 .PHONY : gameboyEmulator/fast
+
+src/glad/src/glad.o: src/glad/src/glad.c.o
+.PHONY : src/glad/src/glad.o
+
+# target to build an object file
+src/glad/src/glad.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/src/glad/src/glad.c.o
+.PHONY : src/glad/src/glad.c.o
+
+src/glad/src/glad.i: src/glad/src/glad.c.i
+.PHONY : src/glad/src/glad.i
+
+# target to preprocess a source file
+src/glad/src/glad.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/src/glad/src/glad.c.i
+.PHONY : src/glad/src/glad.c.i
+
+src/glad/src/glad.s: src/glad/src/glad.c.s
+.PHONY : src/glad/src/glad.s
+
+# target to generate assembly for a file
+src/glad/src/glad.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/src/glad/src/glad.c.s
+.PHONY : src/glad/src/glad.c.s
 
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
@@ -162,6 +199,10 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... gameboyEmulator"
+	@echo "... glad"
+	@echo "... src/glad/src/glad.o"
+	@echo "... src/glad/src/glad.i"
+	@echo "... src/glad/src/glad.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

@@ -5,6 +5,7 @@ gameboyEmulator: \
   CMakeFiles/gameboyEmulator.dir/src/main.cpp.o \
   /usr/lib/libglfw.so.3.4 \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libOpenGL.so \
+  libglad.a \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libstdc++.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libm.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libm.so \
@@ -46,6 +47,8 @@ CMakeFiles/gameboyEmulator.dir/src/main.cpp.o:
 /usr/lib/libglfw.so.3.4:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libOpenGL.so:
+
+libglad.a:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libstdc++.so:
 

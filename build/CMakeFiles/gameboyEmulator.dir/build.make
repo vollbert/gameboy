@@ -97,6 +97,7 @@ gameboyEmulator: CMakeFiles/gameboyEmulator.dir/src/main.cpp.o
 gameboyEmulator: CMakeFiles/gameboyEmulator.dir/build.make
 gameboyEmulator: CMakeFiles/gameboyEmulator.dir/compiler_depend.ts
 gameboyEmulator: /usr/lib/libglfw.so.3.4
+gameboyEmulator: libglad.a
 gameboyEmulator: CMakeFiles/gameboyEmulator.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/fabianolbert/Documents/Projects/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable gameboyEmulator"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gameboyEmulator.dir/link.txt --verbose=$(VERBOSE)

@@ -1,1 +1,1 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/gameboyEmulator.dir/link.d CMakeFiles/gameboyEmulator.dir/src/main.cpp.o -o gameboyEmulator  /usr/lib/libglfw.so.3.4 -lOpenGL
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/gameboyEmulator.dir/link.d CMakeFiles/gameboyEmulator.dir/src/main.cpp.o -o gameboyEmulator  /usr/lib/libglfw.so.3.4 -lOpenGL libglad.a

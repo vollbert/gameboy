@@ -3,10 +3,9 @@
 
 CMakeFiles/gameboyEmulator.dir/src/main.cpp.o
  /home/fabianolbert/Documents/Projects/gameboy/src/main.cpp
- /usr/include/GL/gl.h
- /usr/include/GL/glext.h
+ /home/fabianolbert/Documents/Projects/gameboy/src/glad/include/KHR/khrplatform.h
+ /home/fabianolbert/Documents/Projects/gameboy/src/glad/include/glad/glad.h
  /usr/include/GLFW/glfw3.h
- /usr/include/KHR/khrplatform.h
  /usr/include/alloca.h
  /usr/include/asm-generic/bitsperlong.h
  /usr/include/asm-generic/errno-base.h
@@ -27,9 +26,19 @@ CMakeFiles/gameboyEmulator.dir/src/main.cpp.o
  /usr/include/bits/errno.h
  /usr/include/bits/floatn-common.h
  /usr/include/bits/floatn.h
+ /usr/include/bits/flt-eval-method.h
+ /usr/include/bits/fp-fast.h
+ /usr/include/bits/fp-logb.h
+ /usr/include/bits/iscanonical.h
  /usr/include/bits/libc-header-start.h
+ /usr/include/bits/libm-simd-decl-stubs.h
  /usr/include/bits/locale.h
  /usr/include/bits/long-double.h
+ /usr/include/bits/math-vector.h
+ /usr/include/bits/mathcalls-helper-functions.h
+ /usr/include/bits/mathcalls-macros.h
+ /usr/include/bits/mathcalls-narrow.h
+ /usr/include/bits/mathcalls.h
  /usr/include/bits/pthread_stack_min-dynamic.h
  /usr/include/bits/pthreadtypes-arch.h
  /usr/include/bits/pthreadtypes.h
@@ -146,6 +155,7 @@ CMakeFiles/gameboyEmulator.dir/src/main.cpp.o
  /usr/include/c++/15.2.1/cctype
  /usr/include/c++/15.2.1/cerrno
  /usr/include/c++/15.2.1/clocale
+ /usr/include/c++/15.2.1/cmath
  /usr/include/c++/15.2.1/cstdint
  /usr/include/c++/15.2.1/cstdio
  /usr/include/c++/15.2.1/cstdlib
@@ -206,6 +216,7 @@ CMakeFiles/gameboyEmulator.dir/src/main.cpp.o
  /usr/include/linux/stddef.h
  /usr/include/linux/types.h
  /usr/include/locale.h
+ /usr/include/math.h
  /usr/include/pthread.h
  /usr/include/sched.h
  /usr/include/stdc-predef.h
@@ -245,4 +256,5 @@ gameboyEmulator
  /usr/lib/libmvec.so.1
  /usr/lib32/libGLdispatch.so.0
  /home/fabianolbert/Documents/Projects/gameboy/build/CMakeFiles/gameboyEmulator.dir/src/main.cpp.o
+ /home/fabianolbert/Documents/Projects/gameboy/build/libglad.a
 
