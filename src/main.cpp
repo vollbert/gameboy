@@ -261,6 +261,35 @@ int main(void) {
   // *)0);
   // glEnableVertexAttribArray(0);
 
+  std::vector<std::vector<vertex>> verticesBuffer;
+  Glyf_t glyfBuffer;
+  ttfReader.readGlyf(glyfBuffer, 22);
+  ttfReader.printGlyph(glyfBuffer);
+
+  int start = 0;
+  for (int i = 0; i < glyfBuffer.simpleGlyf.endPtsOfContours.size(); i++) {
+    int endPoint = glyfBuffer.simpleGlyf.endPtsOfContours[i];
+    std::vector<vertex> vertexVector;
+    for (int j = start; j <= endPoint; j++) {
+      vertex bufferVertex;
+      bufferVertex.x = glyfBuffer.simpleGlyf.xCoordinates[j];
+      bufferVertex.y = glyfBuffer.simpleGlyf.yCoordinates[j];
+      vertexVector.push_back(bufferVertex);
+    }
+    verticesBuffer.push_back(vertexVector);
+    start = endPoint + 1;
+  }
+
+  double normalizationFactor = 1000;
+  std::cout << "verticesBuffer x\n";
+  for (int i = 0; i < static_cast<int>(verticesBuffer.size()); ++i) {
+    for (int j = 0; j < static_cast<int>(verticesBuffer[i].size()); ++j) {
+      verticesBuffer[i][j].x /= normalizationFactor;
+      verticesBuffer[i][j].y /= normalizationFactor;
+    }
+    std::cout << "\n";
+  }
+
   std::vector<vertex> vertices1;
   std::vector<vertex> vertices2;
   std::vector<vertex> vertices3;
@@ -288,35 +317,19 @@ int main(void) {
   vertices3.push_back({460.0 / 1000.0f, 50 / 1000.0f, 0});
   vertices3.push_back({460.0 / 1000.0f, 621 / 1000.0f, 0});
 
-  unsigned int VAO1, VBO1;
-  unsigned int VAO2, VBO2;
-  unsigned int VAO3, VBO3;
-  glGenVertexArrays(1, &VAO1);
-  glBindVertexArray(VAO1);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-  glBufferData(GL_ARRAY_BUFFER, vertices1.size() * sizeof(vertex),
-               vertices1.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0); //
+  std::vector<unsigned int> VAOVector(verticesBuffer.size());
+  std::vector<unsigned int> VBOVector(verticesBuffer.size());
 
-  glGenVertexArrays(1, &VAO2);
-  glBindVertexArray(VAO2);
-  glGenBuffers(1, &VBO2);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-  glBufferData(GL_ARRAY_BUFFER, vertices2.size() * sizeof(vertex),
-               vertices2.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  //
-  glEnableVertexAttribArray(0); //
-
-  glGenVertexArrays(1, &VAO3);
-  glBindVertexArray(VAO3);
-  glGenBuffers(1, &VBO3);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO3);
-  glBufferData(GL_ARRAY_BUFFER, vertices3.size() * sizeof(vertex),
-               vertices3.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0); //
+  for (int i = 0; i < verticesBuffer.size(); i++) {
+    glGenVertexArrays(1, &VAOVector[i]);
+    glBindVertexArray(VAOVector[i]);
+    glGenBuffers(1, &VBOVector[i]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOVector[i]);
+    glBufferData(GL_ARRAY_BUFFER, verticesBuffer[i].size() * sizeof(vertex),
+                 verticesBuffer[i].data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void *)0);
+    glEnableVertexAttribArray(0); //
+  }
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window)) {
@@ -329,24 +342,12 @@ int main(void) {
     glPointSize(5.0f);
     // glLineWidth(2.0f);
     // --- DRAW OBJECT 1 ---
-    glBindVertexArray(VAO1);
-    glDrawArrays(GL_POINTS, 0, vertices1.size());
-    glDrawArrays(GL_LINE_LOOP, 0, vertices1.size());
+    for (int i = 0; i < verticesBuffer.size(); i++) {
+      glBindVertexArray(VAOVector[i]);
+      // glDrawArrays(GL_POINTS, 0, verticesBuffer[0].size());
+      glDrawArrays(GL_LINE_LOOP, 0, verticesBuffer[i].size());
+    }
 
-    // --- Draw Object 2 (Triangle 1) ---
-    glBindVertexArray(VAO2); // Correct VAO
-    glDrawArrays(GL_POINTS, 0, vertices2.size());
-    glDrawArrays(GL_LINE_LOOP, 0,
-                 vertices2.size()); // Draw the triangle outline
-
-    // --- Draw Object 3 (Triangle 2) ---
-    glBindVertexArray(VAO3);
-    glDrawArrays(GL_POINTS, 0, vertices3.size());
-    glDrawArrays(GL_LINE_LOOP, 0,
-                 vertices3.size()); // Draw the triangle outline
-
-    // --- DRAWING COMMANDS ---
-    // --- END DRAWING COMMANDS ---
     glBindVertexArray(0);
 
     /* Swap front and back buffers */

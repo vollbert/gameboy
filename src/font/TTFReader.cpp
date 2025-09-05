@@ -12,27 +12,19 @@ TTFReader::TTFReader(const std::string &fontFilePath) {
   // printOffsetSubtables();
 
   readTableDirectories();
-  // printTableDirectoryEntries();
+  printTableDirectoryEntries();
+  readHeadTable(headTable);
+  // printHeadTable(headTable);
+  //
+  // read maxp table
+  readMaxpTable(maxpTable);
+  // printMaxpTable(maxpTable);
 
-  glyfTableNumber = findTable("glyf");
-  // std::cout << "glyfTableNumber: " << glyfTableNumber << std::endl;
+  // read loca description
+  readLocaTable(glyphOffsets);
 
-  // read one glyf
-  // maybe seek specific glyf
-  fontFile.seekg(tableDirectories[glyfTableNumber].offset, std::ios::beg);
-
-  // read glyf description
-  // to do: use variable instead
-  glyfDescription_t glyfDescription;
-  readGlyfDescription();
-  // printGlyfDescription(0);
-
-  // to do: check if simple glyf
-
-  // read simple glyf
-  SimpleGlyf_t simpleGlyf;
-  readSimpleGlyph(simpleGlyf, glyfDescription);
-  printSimpleGlyph(simpleGlyf);
+  readGlyf(glyf, 0);
+  printSimpleGlyph(glyf.simpleGlyf);
 }
 
 void TTFReader::openFontFile(const std::string &fontFilePath) {
@@ -77,14 +69,31 @@ void TTFReader::readTableDirectories() {
   }
 }
 
+void TTFReader::readGlyf(Glyf_t &glyf, int index) {
+  glyfTableNumber = findTable("glyf");
+  std::cout << "glyf table number: " << glyfTableNumber;
+  fontFile.seekg(tableDirectories[glyfTableNumber].offset + glyphOffsets[index],
+                 std::ios::beg);
+  readGlyfDescription(glyf.glyfDescription);
+  printGlyfDescription(glyf.glyfDescription);
+  // to do: check if simple glyf
+  if (glyf.glyfDescription.numberOfContours >= 0) {
+    // read simple glyf
+    readSimpleGlyph(glyf.simpleGlyf, glyf.glyfDescription);
+  } else {
+    // glyph is compound glyph to do
+    std::cout << "compound glyph: to do" << std::endl;
+  }
+}
+
 void TTFReader::readSimpleGlyph(SimpleGlyf_t &simpleGlyf,
                                 glyfDescription_t &glyfDescription) {
 
   // std::cout << std::endl;
-  for (int i = 0; i < glyfDescriptions[0].numberOfContours; i++) {
+  for (int i = 0; i < glyfDescription.numberOfContours; i++) {
     simpleGlyf.endPtsOfContours.push_back(reader.readUnsigned16Bit(&fontFile));
-    // std::cout << "endPtsOfContours: " << i << ": " << endPtsOfContours[i]
-    //           << std::endl;
+    // std::cout << "endPtsOfContours: " << i << ": "
+    //           << simpleGlyf.endPtsOfContours[i] << std::endl;
   }
 
   uint16_t instructionLength = reader.readUnsigned16Bit(&fontFile);
@@ -114,7 +123,7 @@ void TTFReader::readSimpleGlyph(SimpleGlyf_t &simpleGlyf,
       uint8_t repeatTimes = reader.readUnsigned8Bit(&fontFile);
       for (int j = 0; j < repeatTimes; j++) {
         simpleGlyf.flags.push_back(currentOutlineFlag);
-        printOutlineFlags(currentOutlineFlag);
+        // printOutlineFlags(currentOutlineFlag);
       }
     }
     i++;
@@ -128,92 +137,11 @@ void TTFReader::readSimpleGlyph(SimpleGlyf_t &simpleGlyf,
   // for (int i = 0; i < endPtsOfContours.size(); i++) {
   //   newContour[endPtsOfContours[i]] = endPtsOfContours[i];
   // }
-  for (int i = 0; i < numberOfPoints; i++) {
-    if (simpleGlyf.flags[i].xShortVector) {
-      //  x-Short Vector bit is set, this bit describes the sign of the value,
-      //  with a value of 1 equalling positive and a zero value negative.
-      // convert uint8 to uint16 so that we only need one vector
-      uint16_t xCoordinate =
-          static_cast<int16_t>(reader.readUnsigned8Bit(&fontFile));
-      // std::cout << "xCoordinate: " << std::dec << xCoordinate << std::endl;
-      if (i == 0) {
-        previousPoint = 0;
-      } else {
 
-        previousPoint = simpleGlyf.xCoordinates[i - 1];
-      }
-      xCoordinate = previousPoint +
-                    (simpleGlyf.flags[i].xSame ? xCoordinate : -xCoordinate);
-      simpleGlyf.xCoordinates.push_back(xCoordinate);
-    } else {
-      if (simpleGlyf.flags[i].xSame) {
-        // If the x-short Vector bit is not set, and this bit is set, then the
-        // current x-coordinate is the same as the previous x-coordinate.
-        //
-        // std::cout << "xCoordinates[i-1]: " << xCoordinates[i - 1]
-        //           << std::endl;
-        simpleGlyf.xCoordinates.push_back(simpleGlyf.xCoordinates[i - 1]);
-
-      } else {
-        // If the x-short Vector bit is not set, and this bit is not set, the
-        // current x-coordinate is a signed 16-bit delta vector. In this case,
-        // the delta vector is the change in x
-        if (i == 0) {
-          simpleGlyf.xCoordinates.push_back(reader.readSigned16Bit(&fontFile));
-
-        } else {
-          simpleGlyf.xCoordinates.push_back(simpleGlyf.xCoordinates[i - 1] +
-                                            reader.readSigned16Bit(&fontFile));
-          // std::cout << "xCoordinates[i-1]: " << xCoordinates[i - 1]
-          //           << std::endl;
-        }
-      }
-    }
-  }
-
+  // read x
+  readXYPoints(simpleGlyf, 1);
   // read y points
-  for (int i = 0; i < numberOfPoints; i++) {
-    if (simpleGlyf.flags[i].yShortVector) {
-      //  y-Short Vector bit is set, this bit describes the sign of the
-      //  value, with a value of 1 equalling positive and a zero value
-      //  negative.
-      // convert uint8 to uint16 so that we only need one vector
-      uint16_t yCoordinate =
-          static_cast<int16_t>(reader.readUnsigned8Bit(&fontFile));
-      // std::cout << "yCoordinate: " << yCoordinate << std::endl;
-      simpleGlyf.yCoordinates.push_back(
-          simpleGlyf.flags[i].ySame ? yCoordinate : -yCoordinate);
-    } else {
-      if (simpleGlyf.flags[i].ySame) {
-        // If the y-short Vector bit is not set, and this bit is set, then
-        // the current y-coordinate is the same as the previous
-        // y-coordinate.
-        //
-        if (i == 0) {
-
-          simpleGlyf.yCoordinates.push_back(0);
-        } else {
-          // std::cout << "yCoordinates[i-1]: " << yCoordinates[i - 1]
-          // << std::endl;
-          simpleGlyf.yCoordinates.push_back(simpleGlyf.yCoordinates[i - 1]);
-        }
-
-      } else {
-        // If the y-short Vector bit is not set, and this bit is not set,
-        // the current y-coordinate is a signed 16-bit delta vector. In this
-        // case, the delta vector is the change in y
-        if (i == 0) {
-          simpleGlyf.yCoordinates.push_back(reader.readSigned16Bit(&fontFile));
-        } else {
-          // std::cout << "yCoordinates[i-1]: " << yCoordinates[i - 1]
-          // << std::endl;
-          simpleGlyf.yCoordinates.push_back(simpleGlyf.yCoordinates[i - 1] +
-                                            reader.readSigned16Bit(&fontFile));
-        }
-        // std::cout << "yCoordinate: " << yCoordinates[i] << std::endl;
-      }
-    }
-  }
+  readXYPoints(simpleGlyf, 0);
 }
 
 void TTFReader::printSimpleGlyph(SimpleGlyf_t &simpleGlyf) {
@@ -275,6 +203,15 @@ void TTFReader::printSimpleGlyph(SimpleGlyf_t &simpleGlyf) {
   std::cout << "}" << std::endl;
 }
 
+void TTFReader::printCompoundGlyph(compoundGlyf_t &compoundGlyf) {
+  std::cout << "need to implement printCompoundGlyph" << std::endl;
+}
+
+void TTFReader::printGlyph(Glyf_t &glyf) {
+  glyf.isSimple() ? printSimpleGlyph(glyf.simpleGlyf)
+                  : printCompoundGlyph(glyf.compoundGlyf);
+}
+
 void TTFReader::printTableDirectoryEntry(int index) {
   std::cout << "Directory: " << std::dec << index << std::endl;
   std::cout << "Tag: " << std::hex << tableDirectories[index].tag << std::endl;
@@ -311,24 +248,21 @@ int TTFReader::findTable(std::string searchedTag) {
   return -1;
 }
 
-void TTFReader::readGlyfDescription() {
-  glyfDescription_t bufferDescription;
-  bufferDescription.numberOfContours = reader.readSigned16Bit(&fontFile);
-  bufferDescription.xMin = reader.readSigned16Bit(&fontFile);
-  bufferDescription.yMin = reader.readSigned16Bit(&fontFile);
-  bufferDescription.xMax = reader.readSigned16Bit(&fontFile);
-  bufferDescription.yMax = reader.readSigned16Bit(&fontFile);
-  glyfDescriptions.push_back(bufferDescription);
+void TTFReader::readGlyfDescription(glyfDescription_t &glyfDescription) {
+  glyfDescription.numberOfContours = reader.readSigned16Bit(&fontFile);
+  glyfDescription.xMin = reader.readSigned16Bit(&fontFile);
+  glyfDescription.yMin = reader.readSigned16Bit(&fontFile);
+  glyfDescription.xMax = reader.readSigned16Bit(&fontFile);
+  glyfDescription.yMax = reader.readSigned16Bit(&fontFile);
 }
 
-void TTFReader::printGlyfDescription(int index) {
-  std::cout << "Glyf Description: " << index << std::endl;
+void TTFReader::printGlyfDescription(glyfDescription_t &glyfDescription) {
   std::cout << "numberContours: " << std::dec
-            << glyfDescriptions[index].numberOfContours << std::endl;
-  std::cout << "xMin: " << glyfDescriptions[index].xMin << std::endl;
-  std::cout << "yMin: " << glyfDescriptions[index].yMin << std::endl;
-  std::cout << "xMax: " << glyfDescriptions[index].xMax << std::endl;
-  std::cout << "yMax: " << glyfDescriptions[index].yMax << std::endl;
+            << glyfDescription.numberOfContours << std::endl;
+  std::cout << "xMin: " << glyfDescription.xMin << std::endl;
+  std::cout << "yMin: " << glyfDescription.yMin << std::endl;
+  std::cout << "xMax: " << glyfDescription.xMax << std::endl;
+  std::cout << "yMax: " << glyfDescription.yMax << std::endl;
 }
 
 void TTFReader::printOutlineFlags(outlineFlags_t outlineFlags) {
@@ -339,4 +273,150 @@ void TTFReader::printOutlineFlags(outlineFlags_t outlineFlags) {
   std::cout << "xSame: " << outlineFlags.xSame << std::endl;
   std::cout << "ySame: " << outlineFlags.ySame << "\n\n";
   return;
+}
+
+void TTFReader::readHeadTable(headTable_t &headTable) {
+  int headTableIndex = findTable("head");
+  // std::cout << "head table: " << headTableIndex << std::endl;
+  fontFile.seekg(tableDirectories[headTableIndex].offset, std::ios::beg);
+  headTable.version = reader.readFixed(&fontFile);
+  headTable.fontRevision = reader.readFixed(&fontFile);
+  headTable.checkSumAdjustment = reader.readUnsigned32Bit(&fontFile);
+  headTable.magicNumber = reader.readUnsigned32Bit(&fontFile);
+  headTable.flags = reader.readUnsigned16Bit(&fontFile);
+  headTable.unitsPerEm = reader.readUnsigned16Bit(&fontFile);
+  headTable.created = reader.readLongDateTime(&fontFile);
+  headTable.modified = reader.readLongDateTime(&fontFile);
+  headTable.xMin = reader.readFWord(&fontFile);
+  headTable.yMin = reader.readFWord(&fontFile);
+  headTable.xMax = reader.readFWord(&fontFile);
+  headTable.yMax = reader.readFWord(&fontFile);
+  headTable.macStyle = reader.readUnsigned16Bit(&fontFile);
+  headTable.lowestRecPPEM = reader.readUnsigned16Bit(&fontFile);
+  headTable.fontDirectionHint = reader.readSigned16Bit(&fontFile);
+  headTable.indexToLocFormat = reader.readSigned16Bit(&fontFile);
+  headTable.glyphDataFormat = reader.readSigned16Bit(&fontFile);
+}
+
+void TTFReader::printHeadTable(headTable_t &headTable) {
+  std::cout << "head table: " << std::endl;
+  std::cout << "version: " << std::hex << std::setprecision(1) << std::fixed
+            << reader.fixedToDouble(headTable.version) << std::endl;
+
+  std::cout << "fontRevision: " << std::hex << std::setprecision(1)
+            << std::fixed << reader.fixedToDouble(headTable.fontRevision)
+            << std::endl;
+
+  std::cout << "checkSumAdjustment: " << headTable.checkSumAdjustment
+            << std::endl;
+  std::cout << "magicNumber: " << headTable.magicNumber << std::endl;
+  std::cout << "flags: " << headTable.flags << std::endl;
+  std::cout << "unitsPerEm: " << headTable.unitsPerEm << std::endl;
+  std::cout << "created: " << headTable.created << std::endl;
+  std::cout << "modified: " << headTable.modified << std::endl;
+  std::cout << "xMin: " << headTable.xMin << std::endl;
+  std::cout << "yMin: " << headTable.yMin << std::endl;
+  std::cout << "xMax: " << headTable.xMax << std::endl;
+  std::cout << "yMax: " << headTable.yMax << std::endl;
+  std::cout << "lowestRecPPEM: " << headTable.lowestRecPPEM << std::endl;
+  std::cout << "fontDirectionHint: " << headTable.fontDirectionHint
+            << std::endl;
+  std::cout << "indexToLocFormat: " << headTable.indexToLocFormat << std::endl;
+  std::cout << "glyphDataFormat: " << headTable.glyphDataFormat << std::endl
+            << std::endl
+            << std::endl;
+}
+
+void TTFReader::readMaxpTable(maxpTable_t &maxpTable) {
+  int maxpTableIndex = findTable("maxp");
+  // std::cout << "maxp table index: " << maxpTableIndex << std::endl;
+  fontFile.seekg(tableDirectories[maxpTableIndex].offset, std::ios::beg);
+  maxpTable.version = reader.readFixed(&fontFile);
+  maxpTable.numGlyphs = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxPoints = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxContours = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxComponentPoints = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxComponentContours = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxZones = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxTwilightPoints = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxStorage = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxFunctionsDefs = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxInstructionDefs = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxStackElements = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxSizeOfInstructions = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxComponentElements = reader.readUnsigned16Bit(&fontFile);
+  maxpTable.maxComponentDepth = reader.readUnsigned16Bit(&fontFile);
+}
+
+void TTFReader::printMaxpTable(maxpTable_t &maxpTable) {
+  std::cout << "maxp table:" << std::endl;
+  std::cout << "version: " << maxpTable.version << std::endl;
+  std::cout << "numGlyphs: " << maxpTable.numGlyphs << std::endl;
+  std::cout << "maxPoints: " << maxpTable.maxPoints << std::endl;
+  std::cout << "maxContours: " << maxpTable.maxContours << std::endl;
+  std::cout << "maxComponentPoints: " << maxpTable.maxComponentPoints
+            << std::endl;
+  std::cout << "maxComponentContours: " << maxpTable.maxComponentContours
+            << std::endl;
+  std::cout << "maxZones: " << maxpTable.maxZones << std::endl;
+  std::cout << "maxTwilightPoints: " << maxpTable.maxTwilightPoints
+            << std::endl;
+  std::cout << "maxStorage: " << maxpTable.maxStorage << std::endl;
+  std::cout << "maxFunctionDefs: " << maxpTable.maxFunctionsDefs << std::endl;
+  std::cout << "maxInstructionDefs: " << maxpTable.maxInstructionDefs
+            << std::endl;
+  std::cout << "maxStackElements: " << maxpTable.maxStackElements << std::endl;
+  std::cout << "maxSizeOfInstructions: " << maxpTable.maxSizeOfInstructions
+            << std::endl;
+  std::cout << "maxComponentElements: " << maxpTable.maxComponentElements
+            << std::endl;
+  std::cout << "maxComponentDepth: " << maxpTable.maxComponentDepth << std::endl
+            << std::endl;
+}
+
+void TTFReader::readLocaTable(std::vector<uint32_t> &glyphOffsets) {
+  int locaTableIndex = findTable("loca");
+  // std::cout << "loca table: " << locaTableIndex << std::endl;
+  // check index to loc format: if 0 short offsets, if 1 long offsets
+
+  fontFile.seekg(tableDirectories[locaTableIndex].offset, std::ios::beg);
+  // std::cout << "index format: " << headTable.indexToLocFormat << std::endl;
+
+  if (headTable.indexToLocFormat == 1) {
+    // offset represented in long format
+    for (int i = 0; i < maxpTable.numGlyphs; i++) {
+      glyphOffsets.push_back(reader.readUnsigned32Bit(&fontFile));
+    }
+
+  } else {
+    // offset represented in short format
+  }
+}
+
+void TTFReader::readXYPoints(SimpleGlyf_t &simpleGlyf, bool useX) {
+  int numberOfPoints =
+      simpleGlyf.endPtsOfContours[simpleGlyf.endPtsOfContours.size() - 1] + 1;
+  int16_t previousPoint = 0;
+  int16_t difference = 0;
+
+  for (int i = 0; i < numberOfPoints; i++) {
+    bool shortV = useX ? simpleGlyf.flags[i].xShortVector
+                       : simpleGlyf.flags[i].yShortVector;
+    bool same = useX ? simpleGlyf.flags[i].xSame : simpleGlyf.flags[i].ySame;
+
+    if (shortV) {
+      difference = static_cast<int16_t>(reader.readUnsigned8Bit(&fontFile));
+      difference = same ? difference : -difference;
+    } else {
+      if (same) {
+        difference = 0;
+      } else {
+        difference = reader.readSigned16Bit(&fontFile);
+      }
+    }
+    int16_t newCoordinate = previousPoint + difference;
+    useX ? simpleGlyf.xCoordinates.push_back(newCoordinate)
+         : simpleGlyf.yCoordinates.push_back(newCoordinate);
+    previousPoint = newCoordinate;
+  }
 }

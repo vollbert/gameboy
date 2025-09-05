@@ -2,6 +2,3 @@ build/*
 fonts/*
 roms/*
 
-
-.git/
-.gitignore
